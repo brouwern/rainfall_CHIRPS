@@ -27,6 +27,7 @@ Funk, C., P. Peterson, M. Landsfeld, D. Pedreros, J. Verdin, S. Shukla, G. Husak
 library(curl)
 library(raster)
 library(R.utils)
+library(lubridate)
 ```
 
 
@@ -273,12 +274,12 @@ plot(tif.stack.hisp[[i]],
 
 Save cropped raster
 ```{r}
-save(tif.stack.hisp,file = ".data/data_out/temp.RData")
+save(tif.stack.hisp,file = "./data/data_out/temp.RData")
 
 ```
 
 ```{r}
-load("temp.RData")
+load("./data/data_out/temp.RData")
 ```
 
 
@@ -393,9 +394,9 @@ Get meta data for each layer
 #get names of each layr
 layer.names <- names(tif.stack.hisp)
 
-#extrat year month etc
+#extract year month etc
 yr <- gsub(".*([21][01-9][01-9][01-9]).*","\\1",layer.names)
-mo.num <- gsub(".*([01][01-9])([.][t][i][f])$","\\1",layer.names)
+mo.no.char <- gsub(".*([01][01-9])([.][t][i][f])$","\\1",layer.names)
 
 
 ```
@@ -414,14 +415,14 @@ Put data from selected cells into into dataframes
 ```{r}
 dat.scrub <- data.frame(rainfall = ts.scrub,
                         yr = yr,
-                        mo.num = mo.num,
+                        mo.no.char = mo.no.char,
                         site = "scrub",
                         stringsAsFactors = F,
                         i = 1:length(ts.scrub))
 
 dat.broadleaf <- data.frame(rainfall = ts.bl,
                         yr = yr,
-                        mo.num = mo.num,
+                        mo.no.char = mo.no.char,
                         site = "broadleaf",
                         stringsAsFactors = F,
                         i = 1:length(ts.bl))
@@ -429,7 +430,7 @@ dat.broadleaf <- data.frame(rainfall = ts.bl,
 
 dat.Lloyd <- data.frame(rainfall = ts.Lloyd,
                         yr = yr,
-                        mo.num = mo.num,
+                        mo.no.char = mo.no.char,
                         stringsAsFactors = F,
                         site = "Lloyd",
                         i = 1:length(ts.Lloyd))
@@ -448,7 +449,8 @@ dat <- rbind(dat.scrub,
 Calculate month
 
 ```{r}
-dat$mo.num2 <- as.numeric(dat$mo.num)
+mo.no <- gsub("^[0]","",dat$mo.no.char)
+dat$mo.no <- as.numeric(mo.no)
 
 ```
 
@@ -465,14 +467,16 @@ qplot(y = rainfall,
 
 ## Formulate dates
 
+Assign dat as the approximate middle of each month
 ```{r}
 dat$day <- 15
 ```
 
 
+Build dates
 ```{r}
 dat$date <- with(dat,
-                 paste(day,mo.num,yr,sep = "/"))
+                 paste(day,mo.no,yr,sep = "/"))
 
 dat[grep("CHIRPS",dat$date),] <- NA
 ```
@@ -480,15 +484,17 @@ dat[grep("CHIRPS",dat$date),] <- NA
 
 ## Calculate Julian datas
 
-
-
-
 yday function is from lubridate
+
+calculate julian where Jan 1st = 1
 ```{r}
-library(lubridate)
+
 dat$julian <- yday(dat$date)
 
 ```
+
+
+
 ## Plot based on Julian
 
 ```{r}
