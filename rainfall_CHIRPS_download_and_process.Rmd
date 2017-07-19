@@ -1,0 +1,512 @@
+---
+title: "Downloading & Processing CHIRPS satellite rainfall data"
+author: "brouwern@gmail.com"
+date: "July 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction
+
+* CHIRPS is a satellite-derived estimate of daily rainfall that has been corrected with ground station data.
+* THis script downloads and processes CHIRPS data
+* Functions in the curl library are used to download CHIRPS data from the ftp site.
+* In this script I download data for the Carribean region and then subset for my focal region in the Dominican Republic
+
+## References
+Funk, C., P. Peterson, M. Landsfeld, D. Pedreros, J. Verdin, S. Shukla, G. Husak, J. Rowland, L. Harrison, A. Hoell, and J. Michaelsen. 2015. The climate hazards infrared precipitation with stations—a new environmental record for monitoring extremes. Scientific Data 2:150066.
+
+
+## Libraries
+
+```{r}
+library(curl)
+library(raster)
+library(R.utils)
+```
+
+
+## Location of CHIRPS carib data
+```{r}
+ftp. <- "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/camer-carib_monthly/tifs/"
+```
+
+
+
+
+## Access list of CHIRPS files 
+https://stackoverflow.com/questions/36645445/downloading-files-from-ftp-with-r
+
+```{r}
+h <- new_handle(dirlistonly=TRUE)
+
+con <- curl(ftp., "r", h)
+
+tbl <- read.table(con, stringsAsFactors=TRUE, fill=TRUE)
+close(con)
+head(tbl)
+length(tbl)
+
+```
+
+
+
+## Test run: download 2016 data
+
+### Identify desired files
+
+```{r}
+i. <- grep("2016",tbl[,1])
+```
+
+
+
+### Download desired file
+ 
+```{r}
+ftp.file <- paste0(ftp., tbl[i.[1],1])
+fls = basename(ftp.file)
+curl_fetch_disk(ftp.file[1], fls[1])
+```
+
+
+### Unzip file
+
+```{r}
+
+gunzip(fls,
+       remove = FALSE)
+```
+
+
+### Load file
+
+
+Load file as raster
+```{r}
+fls <- gsub(".gz","",fls)
+rast <- stack(fls)
+```
+
+#### Plot data as-is
+
+Values of "-9999" indicate missing or otherwise unusable data.
+```{r}
+plot(rast, maxpixels = c(500000*0.1))
+summary(rast@data@values)
+```
+
+#### Remove NAs
+```{r}
+rast2 <- reclassify(rast,cbind(-9999,NA))
+
+plot(rast2, maxpixels = c(500000*0.1))
+```
+
+## Download in Bulk
+
+
+### Download
+```{r}
+ftp. <- "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/camer-carib_monthly/tifs/"
+
+h <- new_handle(dirlistonly=TRUE)
+
+con <- curl(ftp., "r", h)
+
+tbl <- read.table(con, stringsAsFactors=TRUE, fill=TRUE)
+close(con)
+head(tbl)
+
+
+
+## Identify desired files
+files.i <- grep("[2][0][1][6]",tbl[,1])
+
+
+dir.create("CHIRPS_gz")
+
+## Download desired file
+for(i in 1:length(files.i)){
+  ftp.file <- paste0(ftp., tbl[files.i[i],1])
+  fls = basename(ftp.file)
+  curl_fetch_disk(ftp.file[1], fls[1],
+                  path = "./CHIRPS_tiffs")
+}
+
+```
+
+
+### Unzip in bulk
+
+```{r}
+#unzip
+dir.create("CHIRPS_tiff")
+all.gz <- list.files("./CHIRPS_gz",full.names = T)
+
+for(i in 1:length(all.gz)){
+  gunzip(all.gz[[i]],
+       remove = FALSE)
+}
+
+
+#move
+all.tif <- list.files("./CHIRPS_gz",full.names = T, pattern = "[t][i][f]$")
+
+for(i in 1:length(all.tiff)){
+  new.file <- gsub("_gz","_tiff",all.tiff[i])
+  file.rename(from  = all.tiff[i],
+            to = new.file)
+}
+
+```
+
+
+### Load files as raster
+
+```{r}
+all.tif <- list.files("./CHIRPS_tiff",full.names = T, pattern = "[t][i][f]$")
+
+tif.list <- vector("list", length(all.tif))
+
+names(tif.list) <-gsub("(.*)([c][h][i][r][p][s])([-])(.)","\\2\\4",all.tif)
+
+
+
+for(i in 1:length(all.tif)){
+  rast.work <- stack(all.tif[[i]])
+  rast.work <- reclassify(rast.work,cbind(-9999,NA))
+  tif.list[[i]] <- rast.work
+}
+  
+
+```
+
+### Stack rasters
+
+```{r}
+tif.stack <- stack(tif.list)
+```
+
+
+
+## Process CHIRPS data
+
+### Get outline of focal countries
+
+```{r}
+#outline of DR
+DOM.shp <- getData("GADM", 
+               country = c("DOM"), 
+               level = 0, 
+               path = tmpDir())
+
+#outline of Haiti
+HIT.shp <- getData("GADM", 
+               country = c("HTI"), 
+               level = 0, 
+               path = tmpDir())
+
+```
+
+
+Check results
+```{r}
+par(mfrow = c(1,2))
+plot(HIT.shp)    
+plot(DOM.shp)
+```
+
+
+
+
+### Join DR and Haiti extents
+
+union() joins the 2 shapes
+```{r}
+HISP.shp <- union(DOM.shp,HIT.shp)
+```
+
+Check results
+```{r}
+par(mfrow = c(1,1))
+plot(HISP.shp)    
+
+```
+
+Plot extent over CHRIPs
+```{r}
+plot(tif.list$chirpsv2.0.2016.10.tif)
+
+plot(HISP.shp,add=TRUE)
+
+```
+
+
+
+### Subset focal extent
+
+Use drawExtent to draw square around focal area
+```{r}
+plot(tif.list$chirpsv2.0.2016.10.tif)
+
+ext <- drawExtent()
+```
+
+
+Crop the stack of raster data to extent
+```{r}
+
+tif.stack.hisp <- crop(x = tif.stack, y = ext)
+i<-7
+plot(tif.stack.hisp[[i]],
+     main = names(tif.stack.hisp[[i]]))
+
+
+
+```
+
+
+Save cropped raster
+```{r}
+save(tif.stack.hisp,file = ".data/data_out/temp.RData")
+
+```
+
+```{r}
+load("temp.RData")
+```
+
+
+
+## Merge CHIRPS rainfall w/ spatial locations of study sites
+
+### Load spatial points for study site
+```{r}
+load("./data/data_in/pedernales_spatial_points.RData")
+```
+
+
+## Align spatial points to raster
+
+```{r}
+p.all <- spTransform(spdf.all,
+                     crs(tif.stack.hisp[[1]]))
+```
+
+Check
+
+```{r}
+plot(tif.stack.hisp[[1]][[1]])
+plot(p.all, add = TRUE)
+```
+
+
+
+## Identify cell that a point lies within
+gis.stackexchange.com/questions/174925/how-to-find-the-cell-location-index-of-a-raster-using-lat-long-information
+
+
+
+Get cell numbers
+```{r}
+
+# get cell number
+##thorn-scrub site site 
+id.scrub <- extract(tif.stack.hisp[[1]],
+                   SpatialPoints(cbind(p.all@data[1,2],
+                                       p.all@data[1,1])), 
+                   cellnumbers=TRUE)[1]
+
+##broadleaf forest
+id.bl <- extract(tif.stack.hisp[[1]],
+                   SpatialPoints(cbind(p.all@data[3,2],
+                                       p.all@data[3,1])), 
+                   cellnumbers=TRUE)[1]
+
+
+## Lloyds site (Lloyd et al 2015 PeerJ)
+id.Lloyd<- extract(tif.stack.hisp[[1]],
+                   SpatialPoints(cbind(p.all@data[8,2],
+                                       p.all@data[8,1])), 
+                   cellnumbers=TRUE)[1]
+
+
+
+```
+
+
+Get rows x column location
+```{r}
+row.col.scrub <- rowColFromCell(tif.stack.hisp[[1]],
+               id.scrub)
+
+row.col.bl <- rowColFromCell(tif.stack.hisp[[1]],
+               id.bl)
+
+
+row.col.Lloyd <- rowColFromCell(tif.stack.hisp[[1]],
+               id.Lloyd)
+```
+
+
+
+
+# Visualize cell locations
+Function to visualize selected cells
+```{r}
+plot.cell <- function(rast, row.col, color = 2){
+  plot(extent(rast, 
+            row.col[1], row.col[1], 
+            row.col[2],  row.col[2]), 
+     add=TRUE, col=color, lwd=1)
+}
+```
+
+
+Plot selected cells
+```{r}
+plot(tif.stack.hisp[[1]])
+plot(p.all, add = TRUE)
+plot.cell(rast = tif.stack.hisp[[1]],
+          row.col = row.col.scrub)
+plot.cell(rast = tif.stack.hisp[[1]],
+          row.col = row.col.bl,
+          color = 3)
+plot.cell(rast = tif.stack.hisp[[1]],
+          row.col = row.col.Lloyd,
+          color = 4)
+```
+
+
+
+
+
+## Build time series
+
+Get meta data for each layer
+```{r}
+#get names of each layr
+layer.names <- names(tif.stack.hisp)
+
+#extrat year month etc
+yr <- gsub(".*([21][01-9][01-9][01-9]).*","\\1",layer.names)
+mo.num <- gsub(".*([01][01-9])([.][t][i][f])$","\\1",layer.names)
+
+
+```
+
+
+Extract data values from stacked data; "ts" is for "time series"
+```{r}
+ts.scrub = as.vector(tif.stack.hisp[row.col.scrub])
+ts.bl = as.vector(tif.stack.hisp[row.col.bl])
+ts.Lloyd = as.vector(tif.stack.hisp[row.col.Lloyd])
+
+```
+
+
+Put data from selected cells into into dataframes
+```{r}
+dat.scrub <- data.frame(rainfall = ts.scrub,
+                        yr = yr,
+                        mo.num = mo.num,
+                        site = "scrub",
+                        stringsAsFactors = F,
+                        i = 1:length(ts.scrub))
+
+dat.broadleaf <- data.frame(rainfall = ts.bl,
+                        yr = yr,
+                        mo.num = mo.num,
+                        site = "broadleaf",
+                        stringsAsFactors = F,
+                        i = 1:length(ts.bl))
+
+
+dat.Lloyd <- data.frame(rainfall = ts.Lloyd,
+                        yr = yr,
+                        mo.num = mo.num,
+                        stringsAsFactors = F,
+                        site = "Lloyd",
+                        i = 1:length(ts.Lloyd))
+
+#stack dataframes
+dat <- rbind(dat.scrub,
+             dat.broadleaf,
+             dat.Lloyd)
+
+
+
+
+```
+
+
+Calculate month
+
+```{r}
+dat$mo.num2 <- as.numeric(dat$mo.num)
+
+```
+
+## Plot
+
+```{r}
+qplot(y = rainfall,
+      x = yr,
+      data = na.omit(dat))
+```
+
+
+
+
+## Formulate dates
+
+```{r}
+dat$day <- 15
+```
+
+
+```{r}
+dat$date <- with(dat,
+                 paste(day,mo.num,yr,sep = "/"))
+
+dat[grep("CHIRPS",dat$date),] <- NA
+```
+
+
+## Calculate Julian datas
+
+
+
+
+yday function is from lubridate
+```{r}
+library(lubridate)
+dat$julian <- yday(dat$date)
+
+```
+## Plot based on Julian
+
+```{r}
+qplot(y = rainfall,
+      x = julian,
+      data = na.omit(dat),
+      group = yr,
+      geom = c("point","line"),
+      facets = site ~ .)
+```
+
+
+## Save data
+
+```{r}
+write.csv(dat, 
+          file= "./data/data_out/CHIRPS_rainfall_monthly_time_series.csv",
+          row.names = FALSE)
+
+```
+
