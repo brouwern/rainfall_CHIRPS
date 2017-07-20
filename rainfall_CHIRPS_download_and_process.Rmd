@@ -594,6 +594,7 @@ rain.ann.summary <- merge(temp1,temp2)
 ## Save annual summary
 
 ```{r}
-write.csv(rain.ann.summary, file = "./data/data_out/CHIRPS_rainfall_annual_summary.csv")
+write.csv(rain.ann.summary, file = "./data/data_out/CHIRPS_rainfall_annual_summary.csv",
+          row.names = F)
 ```
 
