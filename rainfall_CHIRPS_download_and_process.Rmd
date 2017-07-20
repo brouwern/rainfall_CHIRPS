@@ -453,7 +453,15 @@ Calculate month
 mo.no <- gsub("^[0]","",dat$mo.no.char)
 dat$mo.no <- as.numeric(mo.no)
 
+dat$mo.char <- month.abb[as.numeric(dat$mo.no)]
+
+
 ```
+
+
+
+
+
 
 ## Plot
 
@@ -468,7 +476,7 @@ qplot(y = rainfall,
 
 ## Formulate dates
 
-Assign dat as the approximate middle of each month
+Assign day as the approximate middle of each month
 ```{r}
 dat$day <- 15
 ```
@@ -476,10 +484,16 @@ dat$day <- 15
 
 Build dates
 ```{r}
-dat$date <- with(dat,
+date. <- with(dat,
                  paste(day,mo.no,yr,sep = "/"))
 
-dat[grep("CHIRPS",dat$date),] <- NA
+date. <- with(dat,
+                 paste(yr,mo.no.char,day,sep = "-"))
+
+date.[length(date.)] <- NA
+
+dat$date <- date.
+
 ```
 
 
@@ -490,7 +504,7 @@ yday function is from lubridate
 calculate julian where Jan 1st = 1
 ```{r}
 
-dat$julian <- yday(dat$date)
+dat$julian <- yday(as.Date(date.))
 
 ```
 
