@@ -27,6 +27,7 @@ Funk, C., P. Peterson, M. Landsfeld, D. Pedreros, J. Verdin, S. Shukla, G. Husak
 library(curl)
 library(raster)
 library(R.utils)
+library(reshape2)
 library(lubridate)
 ```
 
@@ -507,12 +508,92 @@ qplot(y = rainfall,
 ```
 
 
-## Save data
+## Save monthly data
 
 ```{r}
 write.csv(dat, 
           file= "./data/data_out/CHIRPS_rainfall_monthly_time_series.csv",
           row.names = FALSE)
 
+```
+
+
+
+## Summarize by season
+
+### Define seasons
+
+```{r}
+dat$season <- "win"
+dat$season <- ifelse(dat$mo.no > 3, "spr", dat$season )
+dat$season <- ifelse(dat$mo.no > 6, "sum", dat$season )
+dat$season <- ifelse(dat$mo.no > 9, "fal", dat$season )
+
+dat$season <- factor(dat$season,
+                     levels = c("win","spr",
+                                "sum","fal"))
+with(dat, table(season, mo.no))
+
+```
+
+
+Calculat season summaries
+```{r}
+dat <- na.omit(dat)
+rain.season.sum <- dcast(data = dat,
+                      yr  + site ~  season,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+
+names(rain.season.sum)[-c(1:2)] <- paste("rain.sum",
+                                         names(rain.season.sum)[-c(1:2)],
+                                         sep = ".")
+
+i.2017 <- which(rain.season.sum$yr == 2017)
+rain.season.sum[i.2017,c("rain.sum.sum","rain.sum.fal")] <- NA
+
+rain.season.mean <- dcast(data = dat,
+                      yr   + site ~  season,
+                      value.var = "rainfall",
+                      fun.aggregate = mean)
+
+names(rain.season.mean)[-c(1:2)] <- paste("rain.mean",
+                                        names(rain.season.mean)[-c(1:2)],
+                                         sep = ".")
+
+
+rain.yr.sum <- dcast(data = dat,
+                      yr   + site ~  .,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+names(rain.yr.sum)[3] <- "rain.sum.yr"
+rain.yr.sum[i.2017,"rain.sum.yr"] <- NA
+
+rain.yr.mean <- dcast(data = dat,
+                      yr   + site ~  .,
+                      value.var = "rainfall",
+                      fun.aggregate = mean)
+names(rain.yr.mean)[3] <- "rain.mean.yr"
+rain.yr.mean[i.2017,"rain.mean.yr"] <- NA
+
+
+```
+
+
+Compile
+
+```{r}
+temp1 <- merge(rain.yr.mean,rain.yr.sum)
+temp2 <- merge(rain.season.sum,rain.season.mean)
+
+rain.ann.summary <- merge(temp1,temp2)
+
+```
+
+
+## Save annual summary
+
+```{r}
+write.csv(rain.ann.summary, file = "./data/data_out/CHIRPS_rainfall_annual_summary.csv")
 ```
 
