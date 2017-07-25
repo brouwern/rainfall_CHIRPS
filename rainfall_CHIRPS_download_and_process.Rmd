@@ -532,7 +532,7 @@ write.csv(dat,
 ```
 
 
-### Reload
+### Reload rain data
 ```{r}
 dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
 ```
@@ -642,10 +642,10 @@ cast.by.month <- dcast(data = dat,
                       fun.aggregate = sum)
 
 rainy.season2.sum <- apply(cast.by.month[,c(11,12,13)],1,sum)
-rainy.season2.sum[which(rainy.season2==0)] <- NA
+rainy.season2.sum[which(rainy.season2.sum==0)] <- NA
 
 rainy.season2.mean <- apply(cast.by.month[,c(11,12,13)],1,mean)
-rainy.season2.mean[which(rainy.season2==0)] <- NA
+rainy.season2.mean[which(rainy.season2.mean==0)] <- NA
 
 ```
 
@@ -663,7 +663,8 @@ temp2 <- merge(rain.season.sum,rain.season.mean)
 rain.ann.summary <- merge(temp1,temp2)
 
 rain.ann.summary <- cbind(rain.ann.summary,
-                          rainy.season2)
+                          rainy.season2.sum,
+                          rainy.season2.mean)
 
 ```
 
