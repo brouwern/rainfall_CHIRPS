@@ -532,6 +532,12 @@ write.csv(dat,
 ```
 
 
+### Reload
+```{r}
+dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
+```
+
+
 
 ## Summarize by season
 
@@ -551,21 +557,27 @@ with(dat, table(season, mo.no))
 ```
 
 
-Calculat season summaries
+Calculate seasonal summaries (Winter, spring, summer, fall)
 ```{r}
+library(reshape2)
 dat <- na.omit(dat)
+
+## seasonal rainfall
+### total rainfall by season (sum)
 rain.season.sum <- dcast(data = dat,
                       yr  + site ~  season,
                       value.var = "rainfall",
                       fun.aggregate = sum)
 
 names(rain.season.sum)[-c(1:2)] <- paste("rain.sum",
-                                         names(rain.season.sum)[-c(1:2)],
-                                         sep = ".")
+                          names(rain.season.sum)[-c(1:2)],
+                          sep = ".")
 
 i.2017 <- which(rain.season.sum$yr == 2017)
 rain.season.sum[i.2017,c("rain.sum.sum","rain.sum.fal")] <- NA
 
+
+## mean rainfall by season
 rain.season.mean <- dcast(data = dat,
                       yr   + site ~  season,
                       value.var = "rainfall",
@@ -574,8 +586,14 @@ rain.season.mean <- dcast(data = dat,
 names(rain.season.mean)[-c(1:2)] <- paste("rain.mean",
                                         names(rain.season.mean)[-c(1:2)],
                                          sep = ".")
+```
 
 
+Yearly rainfall
+```{r}
+
+## yearly rainfall
+### total rainfall by year (annual sum)
 rain.yr.sum <- dcast(data = dat,
                       yr   + site ~  .,
                       value.var = "rainfall",
@@ -583,6 +601,8 @@ rain.yr.sum <- dcast(data = dat,
 names(rain.yr.sum)[3] <- "rain.sum.yr"
 rain.yr.sum[i.2017,"rain.sum.yr"] <- NA
 
+
+### mean rainfall by year 
 rain.yr.mean <- dcast(data = dat,
                       yr   + site ~  .,
                       value.var = "rainfall",
@@ -591,7 +611,27 @@ names(rain.yr.mean)[3] <- "rain.mean.yr"
 rain.yr.mean[i.2017,"rain.mean.yr"] <- NA
 
 
+
+
+
 ```
+
+
+2nd "Rainy season" rainfall
+```{r}
+cast.by.month <- dcast(data = dat,
+                      yr  + site ~  mo.no,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+
+rainy.season2 <- apply(cast.by.month[,c(11,12,13)],1,sum)
+rainy.season2[which(rainy.season2==0)] <- NA
+
+```
+
+
+
+
 
 
 Compile
@@ -602,7 +642,39 @@ temp2 <- merge(rain.season.sum,rain.season.mean)
 
 rain.ann.summary <- merge(temp1,temp2)
 
+rain.ann.summary <- cbind(rain.ann.summary,
+                          rainy.season2)
+
 ```
+
+
+
+## Explore correlations
+
+
+```{r}
+library(ggplot2)
+library(GGally)
+rain.ann.summary2 <- rain.ann.summary
+
+names(rain.ann.summary2) <- 
+gsub("rain","R",names(rain.ann.summary2))
+
+names(rain.ann.summary2) <- gsub("mean","mn",names(rain.ann.summary2))
+names(rain.ann.summary2) <- gsub("sum","su",names(rain.ann.summary2))
+
+
+i.sum <- grep("rain.sum",
+              names(rain.ann.summary))
+rain.ann.summary3 <- rain.ann.summary2[,-i.sum]
+
+i.lloyd <- which(rain.ann.summary3$site == "Lloyd")
+
+ggpairs(data = rain.ann.summary3[-i.lloyd,],
+        mapping = aes(color = site), 
+        columns = 3:ncol(rain.ann.summary3)) 
+```
+
 
 
 ## Save annual summary
