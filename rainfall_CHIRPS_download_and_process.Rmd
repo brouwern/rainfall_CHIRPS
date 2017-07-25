@@ -537,6 +537,23 @@ write.csv(dat,
 dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
 ```
 
+## Visualize annual time series
+
+```{r}
+library(ggplot2)
+qplot(y = rainfall,
+      x = mo.no,
+      color = site,
+      #group = yr,
+      geom = c("line","point"),
+      data = dat) +
+  facet_wrap( ~yr) +
+geom_vline(xintercept = 3.5)+
+geom_vline(xintercept = 6.5) +
+  geom_vline(xintercept = 9.5) +
+  theme_bw()
+```
+
 
 
 ## Summarize by season
