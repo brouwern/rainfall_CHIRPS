@@ -641,8 +641,11 @@ cast.by.month <- dcast(data = dat,
                       value.var = "rainfall",
                       fun.aggregate = sum)
 
-rainy.season2 <- apply(cast.by.month[,c(11,12,13)],1,sum)
-rainy.season2[which(rainy.season2==0)] <- NA
+rainy.season2.sum <- apply(cast.by.month[,c(11,12,13)],1,sum)
+rainy.season2.sum[which(rainy.season2==0)] <- NA
+
+rainy.season2.mean <- apply(cast.by.month[,c(11,12,13)],1,mean)
+rainy.season2.mean[which(rainy.season2==0)] <- NA
 
 ```
 
