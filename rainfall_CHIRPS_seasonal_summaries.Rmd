@@ -1,0 +1,194 @@
+---
+title: "rainfall_CHIRPS_seasonal_summaries"
+author: "brouwern@gmail.com"
+date: "July 25, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r}
+library(curl)
+library(raster)
+library(R.utils)
+library(reshape2)
+library(lubridate)
+```
+
+### Reload rain data
+```{r}
+dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
+```
+
+## Visualize annual time series
+
+```{r}
+library(ggplot2)
+# qplot(y = rainfall,
+#       x = mo.no,
+#       color = site,
+#       #group = yr,
+#       geom = c("line","point"),
+#       data = dat) +
+#   facet_wrap( ~yr) +
+# geom_vline(xintercept = 3.5)+
+# geom_vline(xintercept = 6.5) +
+#   geom_vline(xintercept = 9.5) +
+#   theme_bw()
+```
+
+
+
+## Summarize by season
+
+### Define seasons
+
+```{r}
+dat$season <- "win"
+dat$season <- ifelse(dat$mo.no > 3, "spr", dat$season )
+dat$season <- ifelse(dat$mo.no > 6, "sum", dat$season )
+dat$season <- ifelse(dat$mo.no > 9, "fal", dat$season )
+
+dat$season <- factor(dat$season,
+                     levels = c("win","spr",
+                                "sum","fal"))
+with(dat, table(season, mo.no))
+
+```
+
+
+Calculate seasonal summaries (Winter, spring, summer, fall)
+```{r}
+library(reshape2)
+dat <- na.omit(dat)
+
+## seasonal rainfall
+### total rainfall by season (sum)
+rain.season.sum <- dcast(data = dat,
+                      yr  + site ~  season,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+
+names(rain.season.sum)[-c(1:2)] <- paste("rain.sum",
+                          names(rain.season.sum)[-c(1:2)],
+                          sep = ".")
+
+i.2017 <- which(rain.season.sum$yr == 2017)
+rain.season.sum[i.2017,c("rain.sum.sum","rain.sum.fal")] <- NA
+
+
+## mean rainfall by season
+rain.season.mean <- dcast(data = dat,
+                      yr   + site ~  season,
+                      value.var = "rainfall",
+                      fun.aggregate = mean)
+
+names(rain.season.mean)[-c(1:2)] <- paste("rain.mean",
+                                        names(rain.season.mean)[-c(1:2)],
+                                         sep = ".")
+```
+
+
+Yearly rainfall
+```{r}
+
+## yearly rainfall
+### total rainfall by year (annual sum)
+rain.yr.sum <- dcast(data = dat,
+                      yr   + site ~  .,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+names(rain.yr.sum)[3] <- "rain.sum.yr"
+rain.yr.sum[i.2017,"rain.sum.yr"] <- NA
+
+
+### mean rainfall by year 
+rain.yr.mean <- dcast(data = dat,
+                      yr   + site ~  .,
+                      value.var = "rainfall",
+                      fun.aggregate = mean)
+names(rain.yr.mean)[3] <- "rain.mean.yr"
+rain.yr.mean[i.2017,"rain.mean.yr"] <- NA
+
+
+
+
+
+```
+
+
+2nd "Rainy season" rainfall
+```{r}
+cast.by.month <- dcast(data = dat,
+                      yr  + site ~  mo.no,
+                      value.var = "rainfall",
+                      fun.aggregate = sum)
+
+rainy.season2.sum <- apply(cast.by.month[,c(11,12,13)],1,sum)
+rainy.season2.sum[which(rainy.season2.sum==0)] <- NA
+
+rainy.season2.mean <- apply(cast.by.month[,c(11,12,13)],1,mean)
+rainy.season2.mean[which(rainy.season2.mean==0)] <- NA
+
+```
+
+
+
+
+
+
+Compile
+
+```{r}
+temp1 <- merge(rain.yr.mean,rain.yr.sum)
+temp2 <- merge(rain.season.sum,rain.season.mean)
+
+rain.ann.summary <- merge(temp1,temp2)
+
+rain.ann.summary <- data.frame(rain.ann.summary,
+                          rainy.season2.sum = rainy.season2.sum,
+                          rainy.season2.mean = rainy.season2.mean)
+
+```
+
+
+
+## Explore correlations
+
+
+```{r}
+# library(ggplot2)
+# library(GGally)
+# rain.ann.summary2 <- rain.ann.summary
+# 
+# names(rain.ann.summary2) <- 
+# gsub("rain","R",names(rain.ann.summary2))
+# 
+# names(rain.ann.summary2) <- gsub("mean","mn",names(rain.ann.summary2))
+# names(rain.ann.summary2) <- gsub("sum","su",names(rain.ann.summary2))
+# 
+# 
+# i.sum <- grep("rain.sum",
+#               names(rain.ann.summary))
+# rain.ann.summary3 <- rain.ann.summary2[,-i.sum]
+# 
+# i.lloyd <- which(rain.ann.summary3$site == "Lloyd")
+# 
+# ggpairs(data = rain.ann.summary3[-i.lloyd,],
+#         mapping = aes(color = site), 
+#         columns = 3:ncol(rain.ann.summary3)) 
+```
+
+
+
+## Save annual summary
+
+```{r}
+write.csv(rain.ann.summary, file = "./data/data_out/CHIRPS_rainfall_annual_summary.csv",
+          row.names = F)
+```
+
