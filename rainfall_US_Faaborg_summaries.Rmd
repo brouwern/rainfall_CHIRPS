@@ -1,0 +1,366 @@
+---
+title: "rainfall_US_Faaborg_summaries"
+author: "Emily Scott"
+date: "July 31, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Set working directory
+```{r}
+setwd <- "C:/Users/emily/OneDrive/Documents/R/git/Aviary/rainfall_CHIRPS"
+```
+
+## US_tot: Mean annual rainfall for the entire US
+## https://www.ncdc.noaa.gov/cag/time-series/us/110/0/pcp/12/12/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Contiguous U.S., Precipitation, January-December
+## Units: Inches
+```{r}
+US.tot.str <- c("199512,32.69,2.75
+199612,33.70,3.76
+199712,31.86,1.92
+199812,33.89,3.95
+199912,28.47,-1.47
+200012,28.22,-1.72
+200112,29.02,-0.92
+200212,29.05,-0.89
+200312,30.51,0.57
+200412,33.25,3.31
+200512,30.08,0.14
+200612,29.82,-0.12
+200712,29.18,-0.76
+200812,31.24,1.30
+200912,32.30,2.36
+201012,31.37,1.43
+201112,30.10,0.16
+201212,27.53,-2.41
+201312,31.06,1.12
+201412,30.85,0.91
+201512,34.59,4.65
+201612,31.42,1.48")
+
+US.tot.str2 <- gsub('[\n\r]', ',', US.tot.str)
+
+US.tot.df <- read.table(text = US.tot.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+US.tot.df$year <- gsub('.{2}$', '', US.tot.df$year)
+```
+
+## NE_tot: Total annual rainfall for US Northeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/101/0/pcp/12/12/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Northeast, Precipitation, January-December
+## Units: Inches
+```{r}
+NE.tot.str <- c("199512,39.45,-2.59
+199612,54.40,12.36
+199712,39.85,-2.19
+199812,43.29,1.25
+199912,42.74,0.70
+200012,44.81,2.77
+200112,34.15,-7.89
+200212,43.65,1.61
+200312,50.99,8.95
+200412,46.35,4.31
+200512,50.23,8.19
+200612,50.17,8.13
+200712,45.01,2.97
+200812,50.47,8.43
+200912,46.34,4.30
+201012,45.34,3.30
+201112,56.67,14.63
+201212,42.67,0.63
+201312,44.34,2.30
+201412,45.36,3.32
+201512,42.48,0.44
+201612,39.31,-2.73")
+
+NE.tot.str2 <- gsub('[\n\r]', ',', NE.tot.str)
+
+NE.tot.df <- read.table(text = NE.tot.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+NE.tot.df$year <- gsub('.{2}$', '', NE.tot.df$year)
+```
+
+## NE_spr: Total spring (March-May) rainfall for the Northeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/101/0/pcp/3/5/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Northeast, Precipitation, March-May
+## Units: Inches
+```{r}
+NE.spr.str <- c("199505,7.58,-2.99
+199605,12.73,2.16
+199705,10.39,-0.18
+199805,11.90,1.33
+199905,9.26,-1.31
+200005,13.52,2.95
+200105,9.46,-1.11
+200205,12.65,2.08
+200305,10.53,-0.04
+200405,11.71,1.14
+200505,11.69,1.12
+200605,9.20,-1.37
+200705,11.85,1.28
+200805,11.31,0.74
+200905,10.55,-0.02
+201005,10.25,-0.32
+201105,16.73,6.16
+201205,9.71,-0.86
+201305,9.37,-1.20
+201405,11.75,1.18
+201505,8.11,-2.46
+201605,8.33,-2.24
+201705,13.69,3.12")
+
+NE.spr.str2 <- gsub('[\n\r]', ',', NE.spr.str)
+
+NE.spr.df <- read.table(text = NE.spr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+NE.spr.df$year <- gsub('.{2}$', '', NE.spr.df$year)
+```
+
+## NE_smr: Total summar (June-Aug) rainfall for the Northeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/101/0/pcp/3/8/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Northeast, Precipitation, June-August
+## Units: Inches
+```{r}
+NE.smr.str <- c("199508,8.51,-3.18
+199608,13.81,2.12
+199708,10.96,-0.73
+199808,13.11,1.42
+199908,8.68,-3.01
+200008,12.82,1.13
+200108,10.36,-1.33
+200208,9.84,-1.85
+200308,14.21,2.52
+200408,14.93,3.24
+200508,11.34,-0.35
+200608,16.81,5.12
+200708,11.15,-0.54
+200808,13.87,2.18
+200908,16.33,4.64
+201008,11.89,0.20
+201108,15.25,3.56
+201208,11.53,-0.16
+201308,16.20,4.51
+201408,13.79,2.10
+201508,14.38,2.69
+201608,10.91,-0.78")
+
+NE.smr.str2 <- gsub('[\n\r]', ',', NE.smr.str)
+
+NE.smr.df <- read.table(text = NE.smr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+NE.smr.df$year <- gsub('.{2}$', '', NE.smr.df$year)
+```
+
+## SE_tot: Total annual rainfall for US Southeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/104/0/pcp/12/12/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Southeast, Precipitation, January-December
+## Units: Inches
+```{r}
+SE.tot.str <- c("199512,53.86,3.52
+199612,53.57,3.23
+199712,53.77,3.43
+199812,54.15,3.81
+199912,46.67,-3.67
+200012,41.72,-8.62
+200112,44.51,-5.83
+200212,51.04,0.70
+200312,60.17,9.83
+200412,52.88,2.54
+200512,51.99,1.65
+200612,44.53,-5.81
+200712,37.83,-12.51
+200812,48.05,-2.29
+200912,58.17,7.83
+201012,44.96,-5.38
+201112,45.28,-5.06
+201212,47.32,-3.02
+201312,58.74,8.40
+201412,51.95,1.61
+201512,56.34,6.00
+201612,46.98,-3.36")
+
+SE.tot.str2 <- gsub('[\n\r]', ',', SE.tot.str)
+
+SE.tot.df <- read.table(text = SE.tot.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+SE.tot.df$year <- gsub('.{2}$', '', SE.tot.df$year)
+```
+
+## SE_spr: Total spring (March-May) rainfall for the Southeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/104/0/pcp/3/5/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Southeast, Precipitation, March-May
+## Units: Inches
+```{r}
+SE.spr.str <- c("199505,9.46,-2.72
+199605,13.28,1.10
+199705,11.74,-0.44
+199805,13.80,1.62
+199905,8.92,-3.26
+200005,9.17,-3.01
+200105,12.30,0.12
+200205,10.06,-2.12
+200305,17.71,5.53
+200405,7.62,-4.56
+200505,13.35,1.17
+200605,7.19,-4.99
+200705,6.34,-5.84
+200805,10.78,-1.40
+200905,16.75,4.57
+201005,11.44,-0.74
+201105,11.50,-0.68
+201205,11.24,-0.94
+201305,11.96,-0.22
+201405,15.03,2.85
+201505,11.05,-1.13
+201605,11.06,-1.12
+201705,12.71,0.53")
+
+SE.spr.str2 <- gsub('[\n\r]',',', SE.spr.str)
+
+SE.spr.df <- read.table(text = SE.spr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+```
+
+## SE_smr: Total summer (June-Aug) rainfall for the Southeast Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/104/0/pcp/3/8/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Southeast, Precipitation, June-August
+## Units: Inches
+```{r}
+SE.smr.str <- c("199508,18.04,2.10
+199608,15.40,-0.54
+199708,14.50,-1.44
+199808,12.56,-3.38
+199908,14.58,-1.36
+200008,13.37,-2.57
+200108,16.92,0.98
+200208,14.31,-1.63
+200308,21.27,5.33
+200408,18.64,2.70
+200508,19.47,3.53
+200608,14.08,-1.86
+200708,12.65,-3.29
+200808,16.55,0.61
+200908,14.22,-1.72
+201008,13.72,-2.22
+201108,13.17,-2.77
+201208,17.74,1.80
+201308,23.08,7.14
+201408,13.48,-2.46
+201508,15.53,-0.41
+201608,13.87,-2.07")
+
+SE.smr.str2 <- gsub('[\n\r]', ',', SE.smr.str)
+
+SE.smr.df <- read.table(text = SE.smr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+SE.smr.df$year <- gsub('.{2}$', '', SE.smr.df$year)
+```
+
+## CE_tot: Total annual rainfall for US Central Region
+## https://www.ncdc.noaa.gov/cag/time-series/us/123/0/pcp/12/12/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Central NWS Region, Precipitation, January-December
+## Units: Inches
+```{r}
+CE.tot.str <- c("199512,29.42,2.58
+199612,29.63,2.79
+199712,27.27,0.43
+199812,30.76,3.92
+199912,27.30,0.46
+200012,26.71,-0.13
+200112,27.89,1.05
+200212,25.05,-1.79
+200312,25.86,-0.98
+200412,29.33,2.49
+200512,26.88,0.04
+200612,26.42,-0.42
+200712,28.98,2.14
+200812,31.70,4.86
+200912,30.74,3.90
+201012,30.35,3.51
+201112,29.95,3.11
+201212,21.80,-5.04
+201312,30.45,3.61
+201412,29.02,2.18
+201512,32.27,5.43
+201612,29.89,3.05")
+
+CE.tot.str2 <- gsub('[\n\r]', ',', CE.tot.str)
+
+CE.tot.df <- read.table(text = CE.tot.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+CE.tot.df$year <- gsub('.{2}$', '', CE.tot.df$year)
+```
+
+## CE_spr: Total spring (March-May) rainfall for the Central region
+## https://www.ncdc.noaa.gov/cag/time-series/us/123/0/pcp/3/5/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Central NWS Region, Precipitation, March-May
+## Units: Inches
+```{r}
+CE.spr.str <- c("199505,10.88,3.25
+199605,8.39,0.76
+199705,7.08,-0.55
+199805,8.23,0.60
+199905,9.08,1.45
+200005,7.10,-0.53
+200105,7.83,0.20
+200205,7.90,0.27
+200305,8.05,0.42
+200405,8.95,1.32
+200505,6.46,-1.17
+200605,7.28,-0.35
+200705,8.67,1.04
+200805,9.14,1.51
+200905,8.40,0.77
+201005,8.14,0.51
+201105,10.37,2.74
+201205,6.89,-0.74
+201305,9.79,2.16
+201405,7.13,-0.50
+201505,9.10,1.47
+201605,8.92,1.29
+201705,9.69,2.06")
+
+CE.spr.str2 <- gsub('[\n\r]', ',', CE.spr.str)
+
+CE.spr.df <- read.table(text = CE.spr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+CE.spr.df$year <- gsub('.{2}$', '', CE.spr.df$year)
+```
+
+## CE_smr: Total summer (June-Aug) rainfall for the Central region
+## https://www.ncdc.noaa.gov/cag/time-series/us/123/0/pcp/3/8/1995-2017?base_prd=true&firstbaseyear=1901&lastbaseyear=2000
+## Central NWS Region, Precipitation, June-August
+## Units: Inches
+```{r}
+CE.smr.str <- c("199508,9.47,0.15
+199608,9.19,-0.13
+199708,9.93,0.61
+199808,11.20,1.88
+199908,10.06,0.74
+200008,9.60,0.28
+200108,9.19,-0.13
+200208,8.67,-0.65
+200308,8.25,-1.07
+200408,9.67,0.35
+200508,9.80,0.48
+200608,8.41,-0.91
+200708,9.28,-0.04
+200808,10.01,0.69
+200908,10.66,1.34
+201008,12.29,2.97
+201108,9.42,0.10
+201208,6.12,-3.20
+201308,8.85,-0.47
+201408,11.83,2.51
+201508,11.45,2.13
+201608,11.02,1.70")
+
+CE.smr.str2 <- gsub('[\n\r]', ',', CE.smr.str)
+
+CE.smr.df <- read.table(text = CE.smr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+CE.smr.df$year <- gsub('.{2}$', '', CE.smr.df$year)
+```
