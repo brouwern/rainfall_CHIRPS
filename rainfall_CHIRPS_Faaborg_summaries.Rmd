@@ -1,0 +1,156 @@
+---
+title: "rainfall_CHIRPS_Faaborg_summaries"
+author: "Emily Scott"
+date: "July 28, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# NAMING CONVENTION
+# There are one year and 6 month rain intervals (one year = "full", 6 months = "half")
+# Example: for measurements taken in Jan. 2017
+#   # rain.full._         total rainfall from Jan. 2016 - Dec. 2016 (the previous year)
+#   # rain.full.full      total rainfrom from Jan. 2015 - Dec. 2016 (the previous 2 years)
+#   # rain.half._         total rainfall from Jan. 2016 - Jun. 2016 (first 6 months of previous year)
+#   # rain.half.half      total rainfall from Jan. 2015 - Jun. 2015 & Jan. 2016 - Jun. 2016 (first 6 months of previous 2 years)
+#   # rain._.half         total rainfall from Jan. 2015 - Jun. 2015 (first 6 months from 2 years ago)
+
+## Load data
+```{r}
+dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
+```
+
+## Define max and min year
+## Min year is fixed at 1995 because CHIRPS data don't exist before that
+```{r}
+max.yr <- max(dat$yr)
+min.yr <- 1995
+```
+
+## Create dataframe to store all climate data
+```{r}
+# Create dataframe
+clim.dat <- matrix(nrow = c(3*(max.yr-min.yr-1)), ncol = 2)
+clim.dat <- as.data.frame(clim.dat)
+
+# Rename columns
+colnames(clim.dat) <- c("year", "site")
+
+# Fill first two columns with relevant info
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+  
+  clim.dat$year[3*i-2] <- c(1 + min.yr + i)
+  clim.dat$year[3*i-1] <- c(1 + min.yr + i)
+  clim.dat$year[3*i]   <- c(1 + min.yr + i)
+  
+  clim.dat$site[3*i-2] <- "scrub"
+  clim.dat$site[3*i-1] <- "broadleaf"
+  clim.dat$site[3*i]   <- "Lloyd"
+}
+```
+
+# PREV: Total rainfall in previous year
+```{r}
+# Create column to store one year rainfall data
+clim.dat$rain.full._ <- rep(NA, dim(clim.dat)[1])
+
+# Fill column with one year rainfall data
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+  
+  clim.dat$rain.full._[3*i-2] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "scrub"),
+                                         "rainfall"])
+  clim.dat$rain.full._[3*i-1] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "broadleaf"),
+                                         "rainfall"])
+  clim.dat$rain.full._[3*i]   <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "Lloyd"),
+                                         "rainfall"])
+}
+```
+
+## SUM: Sum of total rainfall of the current year and the previous year
+```{r}
+# Create column to store two year rainfall data
+clim.dat$rain.full.full <- rep(NA, dim(clim.dat)[1])
+
+# Fill column with two year rainfall data
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+  
+  clim.dat$rain.full.full[3*i-2] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "scrub"| 
+                                                  dat$yr == current.yr-2 & dat$site == "scrub"),
+                                            "rainfall"])
+  clim.dat$rain.full.full[3*i-1] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "broadleaf"| 
+                                                  dat$yr == current.yr-2 & dat$site == "broadleaf"),
+                                            "rainfall"])
+  clim.dat$rain.full.full[3*i]   <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "Lloyd"| 
+                                                  dat$yr == current.yr-2 & dat$site == "Lloyd"),
+                                            "rainfall"])
+}
+```
+
+## FIR: Rainfall in first six months of previous year (January-June)
+```{r}
+# Create column to store 6 month rainfall data from previous year
+clim.dat$rain.half._ <- rep(NA, dim(clim.dat)[1])
+
+# Fill column with 6 month rainfall data from previous year
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+
+  clim.dat$rain.half._[3*i-2] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "scrub" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+  clim.dat$rain.half._[3*i-1] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "broadleaf" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+  clim.dat$rain.half._[3*i]   <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "Lloyd" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+}
+```
+
+## F_SUM: Sum of total rainfall in first six months of current and previous year
+```{r}
+# Create column to store 6 month rainfall data from previous two years
+clim.dat$rain.half.half <- rep(NA, dim(clim.dat)[1])
+
+# Fill column with 6 month rainfall data from previous two years
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+
+  clim.dat$rain.half.half[3*i-2] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "scrub" & dat$mo.no %in% c(1:6)| 
+                                                  dat$yr == current.yr-2 & dat$site == "scrub" & dat$mo.no %in% c(1:6)),
+                                            "rainfall"])
+  clim.dat$rain.half.half[3*i-1] <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "broadleaf" & dat$mo.no %in% c(1:6)| 
+                                                  dat$yr == current.yr-2 & dat$site == "broadleaf" & dat$mo.no %in% c(1:6)),
+                                            "rainfall"])
+  clim.dat$rain.half.half[3*i]   <- sum(dat[which(dat$yr == current.yr-1 & dat$site == "Lloyd" & dat$mo.no %in% c(1:6)| 
+                                                  dat$yr == current.yr-2 & dat$site == "Lloyd" & dat$mo.no %in% c(1:6)),
+                                            "rainfall"])
+}
+```
+
+# F_PREV: Total rainfall from first six months of previous year
+```{r}
+# Create column to store 6 month rainfall data from 2 years ago
+clim.dat$rain._.half <- rep(NA, dim(clim.dat)[1])
+
+# Fill column with 6 month rainfall data from 2 years ago
+for (i in 1:max.yr-min.yr-1)
+{
+  current.yr <- 1 + min.yr + i
+
+  clim.dat$rain._.half[3*i-2] <- sum(dat[which(dat$yr == current.yr-2 & dat$site == "scrub" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+  clim.dat$rain._.half[3*i-1] <- sum(dat[which(dat$yr == current.yr-2 & dat$site == "broadleaf" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+  clim.dat$rain._.half[3*i]   <- sum(dat[which(dat$yr == current.yr-2 & dat$site == "Lloyd" & dat$mo.no %in% c(1:6)),
+                                         "rainfall"])
+}
+```
