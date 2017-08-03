@@ -1,0 +1,64 @@
+---
+title: "Compare Faaborg and Original Rainfall Data"
+author: "brouwern@gmail.com"
+date: "August 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+QA/QC and merging of ES's work up CHIRPS rainfall to be in the format of Faaborg and merge with NLBs original workup.
+
+## Reference
+Dugger, Faaborg, et al.  2004.  Understanding survival and abundance of overwintering warblers: does rainfall matter?  Condor 106:744-760.
+
+
+
+## Packages
+```{r}
+library(ggplot2)
+```
+
+
+## Load CHIRPS rainfall data
+
+```{r}
+faaborg <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series_Faaborg.csv")
+
+nathan <- read.csv(file = "./data/data_out/CHIRPS_rainfall_annual_summary.csv")
+```
+
+
+```{r}
+dim(faaborg)
+dim(nathan)
+
+tail(nathan)
+
+summary(faaborg)
+summary(nathan)
+```
+
+
+
+## Merge Faaborg and Nathan Approach to climate data
+```{r}
+faanathan <- merge(faaborg, nathan)
+dim(faanathan)
+names(faanathan)
+```
+
+
+## Plot
+```{r}
+qplot(y = rain.full._,
+      x = rain.sum.yr,
+      data = faanathan,
+      color = site) + #facet_wrap(~yr) +
+  geom_abline(slope = 1, intercept = 0)
+```
+

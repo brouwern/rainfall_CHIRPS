@@ -11,7 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-This script works up the rainfall predictors used by Faaborg in their study in Puerto Rico.
+This script works up the rainfall predictors used by Dugger, Faaborg et al in their study in Puerto Rico.
+
+Most/all of their values are sums, not mean
+
+## Reference
+Dugger, Faaborg, et al.  2004.  Understanding survival and abundance of overwintering warblers: does rainfall matter?  Condor 106:744-760.
 
 ## NAMING CONVENTION
 
@@ -60,6 +65,19 @@ for (i in 1:max.yr-min.yr-1)
   clim.dat$site[3*i]   <- "Lloyd"
 }
 ```
+
+
+Alternative approach:
+```{r}
+temp <- expand.grid(yr = c(min.yr:max.yr),
+            site= c("scrub","broadleaf","Lloyd"))
+
+dim(temp)
+```
+
+
+
+
 
 # PREV: Total rainfall in previous year
 ```{r}
