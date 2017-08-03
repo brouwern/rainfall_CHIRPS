@@ -169,6 +169,7 @@ for (i in 1:max.yr-min.yr-1)
 
 ```{r}
 dat <- write.csv(clim.dat,
-                 file = "./data/data_out/CHIRPS_rainfall_monthly_time_series_Faaborg.csv")
+                 file = "./data/data_out/CHIRPS_rainfall_monthly_time_series_Faaborg.csv",
+                 row.names = FALSE)
 ```
 
