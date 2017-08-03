@@ -44,16 +44,16 @@ clim.dat <- matrix(nrow = c(3*(max.yr-min.yr-1)), ncol = 2)
 clim.dat <- as.data.frame(clim.dat)
 
 # Rename columns
-colnames(clim.dat) <- c("year", "site")
+colnames(clim.dat) <- c("yr", "site")
 
 # Fill 1st two columns with relevant info
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
   
-  clim.dat$year[3*i-2] <- c(1 + min.yr + i)
-  clim.dat$year[3*i-1] <- c(1 + min.yr + i)
-  clim.dat$year[3*i]   <- c(1 + min.yr + i)
+  clim.dat$yr[3*i-2] <- c(1 + min.yr + i)
+  clim.dat$yr[3*i-1] <- c(1 + min.yr + i)
+  clim.dat$yr[3*i]   <- c(1 + min.yr + i)
   
   clim.dat$site[3*i-2] <- "scrub"
   clim.dat$site[3*i-1] <- "broadleaf"
