@@ -222,6 +222,8 @@ SE.spr.str <- c("199505,9.46,-2.72
 SE.spr.str2 <- gsub('[\n\r]',',', SE.spr.str)
 
 SE.spr.df <- read.table(text = SE.spr.str2, sep = ",", col.names = c("year","rainfall.inches","deviation"))
+
+SE.spr.df$year <- gsub('.{2}$', '', SE.spr.df$year)
 ```
 
 ## SE_smr: Total summer (June-Aug) rainfall for the Southeast Region
@@ -364,3 +366,53 @@ CE.smr.df <- read.table(text = CE.smr.str2, sep = ",", col.names = c("year","rai
 
 CE.smr.df$year <- gsub('.{2}$', '', CE.smr.df$year)
 ```
+
+
+
+## Compile
+
+```{r}
+
+rainlabelR <- function(name.){
+  paste(name.,c("tot","dev"),sep = ".")
+}
+js. <- 2:3
+names(US.tot.df)[js.] <- rainlabelR("US.tot")
+
+names(NE.tot.df)[js.] <- rainlabelR("NE.tot")
+names(NE.spr.df)[js.] <- rainlabelR("NE.spr")
+names(NE.smr.df)[js.] <- rainlabelR("NE.smr")
+
+names(SE.tot.df)[js.] <- rainlabelR("SE.tot")
+names(SE.spr.df)[js.] <- rainlabelR("SE.spr")#
+names(SE.smr.df)[js.] <- rainlabelR("SE.smr")
+
+names(CE.tot.df)[js.] <- rainlabelR("CE.tot")
+names(CE.spr.df)[js.] <- rainlabelR("CE.spr")
+names(CE.smr.df)[js.] <- rainlabelR("CE.smr")
+
+dfs <- ls(pattern = "df$")
+seed. <- get(x = dfs[1])
+
+for(i in 2:length(dfs)){
+  temp <- get(x = dfs[i])
+  seed. <- merge(seed.,
+                 get(x = dfs[i]),
+                 all = T)
+  print(i)
+  print(names(seed.))
+}
+
+
+rain.noaa <- seed.
+```
+
+
+
+## Save
+
+```{r}
+write.csv(rain.noaa,
+          file = "./data/data_out/NOAA_rainfall.csv")
+```
+
