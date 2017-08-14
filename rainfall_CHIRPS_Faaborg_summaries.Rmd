@@ -10,28 +10,29 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introduction
-
 This script works up the rainfall predictors used by Dugger, Faaborg et al in their study in Puerto Rico.
-
 Most/all of their values are sums, not mean
 
 ## Reference
 Dugger, Faaborg, et al.  2004.  Understanding survival and abundance of overwintering warblers: does rainfall matter?  Condor 106:744-760.
 
 ## NAMING CONVENTION
-
 There are one year and 6 month rain intervals (one year = "full", 6 months = "half")
 
 Example: for measurements taken in Jan. 2017
-
 * rain.full._: total rainfall from Jan. 2016 - Dec. 2016 (the previous year)
 * rain.full.full: total rainfrom from Jan. 2015 - Dec. 2016 (the previous 2 years)
 * rain.half._: total rainfall from Jan. 2016 - Jun. 2016 (1st 6 mo of prev year)
 * rain.half.half: total rainfall from Jan. 2015 - Jun. 2015 & Jan. 2016 - Jun. 2016 (1st 6 months of previous 2 years)
 * rain._.half: total rainfall from Jan. 2015 - Jun. 2015 (1st 6 months from 2 years ago)
 
+## Dataframes
+dat is a dataframe with monthly rainfall for each habitat type (scrub, broadleaf, lloyd)
+clim.dat processes the data and creates the six month rain fall interval summaries, as described above
+
 ## Load data
 ```{r}
+setwd("C:/Users/emily/OneDrive/Documents/R/git/Aviary/rainfall_CHIRPS")
 dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
 ```
 
@@ -44,14 +45,14 @@ min.yr <- 1995
 
 ## Create dataframe to store all climate data
 ```{r}
-# Create dataframe
+### Create dataframe
 clim.dat <- matrix(nrow = c(3*(max.yr-min.yr-1)), ncol = 2)
 clim.dat <- as.data.frame(clim.dat)
 
-# Rename columns
+### Rename columns
 colnames(clim.dat) <- c("yr", "site")
 
-# Fill 1st two columns with relevant info
+### Fill 1st two columns with relevant info
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -66,25 +67,20 @@ for (i in 1:max.yr-min.yr-1)
 }
 ```
 
-
-Alternative approach:
+## Alternative approach:
 ```{r}
 temp <- expand.grid(yr = c(min.yr:max.yr),
-            site= c("scrub","broadleaf","Lloyd"))
+                    site= c("scrub", "broadleaf", "Lloyd"))
 
 dim(temp)
 ```
 
-
-
-
-
-# PREV: Total rainfall in previous year
+## PREV: Total rainfall in previous year
 ```{r}
-# Create column to store one year rainfall data
+### Create column to store one year rainfall data
 clim.dat$rain.full._ <- rep(NA, dim(clim.dat)[1])
 
-# Fill column with one year rainfall data
+### Fill column with one year rainfall data
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -100,10 +96,10 @@ for (i in 1:max.yr-min.yr-1)
 
 ## SUM: Sum of total rainfall of the current year and the previous year
 ```{r}
-# Create column to store two year rainfall data
+### Create column to store two year rainfall data
 clim.dat$rain.full.full <- rep(NA, dim(clim.dat)[1])
 
-# Fill column with two year rainfall data
+### Fill column with two year rainfall data
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -122,10 +118,10 @@ for (i in 1:max.yr-min.yr-1)
 
 ## FIR: Rainfall in 1st six months of previous year (January-June)
 ```{r}
-# Create column to store 6 month rainfall data from previous year
+### Create column to store 6 month rainfall data from previous year
 clim.dat$rain.half._ <- rep(NA, dim(clim.dat)[1])
 
-# Fill column with 6 month rainfall data from previous year
+### Fill column with 6 month rainfall data from previous year
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -141,10 +137,10 @@ for (i in 1:max.yr-min.yr-1)
 
 ## F_SUM: Sum of total rainfall in 1st six months of current and previous year
 ```{r}
-# Create column to store 6 month rainfall data from previous two years
+### Create column to store 6 month rainfall data from previous two years
 clim.dat$rain.half.half <- rep(NA, dim(clim.dat)[1])
 
-# Fill column with 6 month rainfall data from previous two years
+### Fill column with 6 month rainfall data from previous two years
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -161,12 +157,12 @@ for (i in 1:max.yr-min.yr-1)
 }
 ```
 
-# F_PREV: Total rainfall from 1st six months of previous year
+## F_PREV: Total rainfall from 1st six months of previous year
 ```{r}
-# Create column to store 6 month rainfall data from 2 years ago
+### Create column to store 6 month rainfall data from 2 years ago
 clim.dat$rain._.half <- rep(NA, dim(clim.dat)[1])
 
-# Fill column with 6 month rainfall data from 2 years ago
+### Fill column with 6 month rainfall data from 2 years ago
 for (i in 1:max.yr-min.yr-1)
 {
   current.yr <- 1 + min.yr + i
@@ -180,14 +176,9 @@ for (i in 1:max.yr-min.yr-1)
 }
 ```
 
-
-
-
 ## Save Data
-
 ```{r}
 dat <- write.csv(clim.dat,
                  file = "./data/data_out/CHIRPS_rainfall_monthly_time_series_Faaborg.csv",
                  row.names = FALSE)
 ```
-
