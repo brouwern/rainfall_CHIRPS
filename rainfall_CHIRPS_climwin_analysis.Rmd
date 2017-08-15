@@ -1,0 +1,269 @@
+---
+title: "CHIRPS climwin analysis"
+author: "Emily Scott"
+date: "August 14, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load necessary packages
+```{r}
+library(climwin)
+library(lubridate)
+library(reshape2)
+```
+
+## Set working directory
+## Load climate data and bird data
+```{r, warning = F}
+setwd("C:/Users/emily/OneDrive/Documents/R/git/Aviary/rainfall_CHIRPS")
+rain.dat <- read.csv("./data/data_out/CHIRPS_rainfall_monthly_time_series.csv")
+
+setwd("C:/Users/emily/OneDrive/Documents/R/git/Aviary/Aceitillar_trends_2017")
+bird.dat <- read.csv("./data/data_for_analyses/spp_level_data_all_nonrarities.csv")
+```
+
+## Reshape data
+```{r}
+### Manually create column with date in dd/mm/yyyy format
+rain.dat$date2 <- with(rain.dat,
+                       paste(day, mo.no, yr, sep = "/"))
+bird.dat$date2 <- with(bird.dat,
+                       paste(15, 01, yr, sep = "/"))
+
+### Reformat month so that instead of e.g. MM = 1 for January, it's now MM = 01
+rain.dat$date3 <- gsub("([//])([1-9])([//])","\\10\\2\\3", rain.dat$date2)
+bird.dat$date3 <- gsub("([//])([1-9])([//])","\\10\\2\\3", bird.dat$date2)
+
+### Change format to dd/mm/yyyy
+rain.dat$date4 <- as.Date(rain.dat$date3, format = "%d/%m/%Y")
+bird.dat$date4 <- as.Date(bird.dat$date3, format = "%d/%m/%Y")
+```
+
+## Subset relevant data
+```{r}
+i.rain1 <- which(colnames(rain.dat) %in% c("rainfall", "site", "date4", "yr"))
+rain.dat2 <- rain.dat[ , i.rain1]
+
+i.bird1 <- which(colnames(bird.dat) %in% c("hb", "spp.code", "N", "date4", "yr"))
+bird.dat2 <- bird.dat[ , i.bird1]
+```
+
+## Sum total captures in each habitat type 
+## i.e. sum scrub.1 & scrub.2 to calculate total captures for scrub
+## i.e. sum broadleaf.1 & broadleaf.2 to calculate total captures for broadleaf
+```{r}
+bird.dat2 <- dcast(bird.dat2, formula = hb + yr + spp.code + date4 ~ "N", value.var = "N", fun.aggregate = function(x) sum(x))
+```
+
+## Create dataframe for first 6 years (1995-2002) and last 3 years (2014, 2015, 2017)
+```{r}
+i.rain2 <- which(rain.dat2$date4 < as.Date('01/15/2003', format = "%m/%d/%Y"))
+rain.dat3 <- rain.dat2[i.rain2, ]
+
+i.rain3 <- which(rain.dat2$date4 > as.Date('01/15/2003', format = "%m/%d/%Y"))
+rain.dat4 <- rain.dat2[i.rain3, ]
+
+i.bird2 <- which(bird.dat2$date4 < as.Date('01/15/2003', format = "%m/%d/%Y"))
+bird.dat3 <- bird.dat2[i.bird2, ]
+
+i.bird3 <- which(bird.dat2$date4 > as.Date('01/15/2003', format = "%m/%d/%Y"))
+bird.dat4 <- bird.dat2[i.bird3, ]
+```
+
+## Create subsets for each habitat
+```{r}
+### Scrub and broadleaf for rain data from 1995-2002 (dat3)
+rain.dat3.scrub <- rain.dat3[which(rain.dat3$site == "scrub"), ]
+rain.dat3.brdlf <- rain.dat3[which(rain.dat3$site == "broadleaf"), ]
+
+### Scrub and broadleaf for rain data from 2014, 2015, 2017 (dat4)
+rain.dat4.scrub <- rain.dat4[which(rain.dat4$site == "scrub"), ]
+rain.dat4.brdlf <- rain.dat4[which(rain.dat4$site == "broadleaf"), ]
+
+### Scrub and broadleaf for bird data from 1995-2002 (dat3)
+bird.dat3.scrub <- bird.dat3[which(bird.dat3$hb == "scrub"), ]
+bird.dat3.brdlf <- bird.dat3[which(bird.dat3$hb == "broadleaf"), ]
+
+### Scrub and broadleaf for bird data from 2014, 2015, 2017 (dat4)
+bird.dat4.scrub <- bird.dat4[which(bird.dat4$hb == "scrub"), ]
+bird.dat4.brdlf <- bird.dat4[which(bird.dat4$hb == "broadleaf"), ]
+```
+
+## SUMMARY OF RELEVANT DATAFRAMES
+* rain.dat3.scrub -- rain data from years 1995-2002 in the scrub habitat
+* rain.dat3.brdlf -- rain data from years 1995-2002 in the broadleaf habitat
+* rain.dat4.scrub -- rain data from years 2014, 2015, 2017 in the scrub habitat
+* rain.dat4.brdlf -- rain data from years 2014, 2015, 2017 in the broadleaf habitat
+
+* bird.dat3.scrub -- bird data from years 1995-2002 in the scrub habitat
+* bird.dat3.brdlf -- bird data from years 1995-2002 in the broadleaf habitat
+* bird.dat4.scrub -- bird data from years 2014, 2015, 2017 in the scrub habitat
+* bird.dat4.brdlf -- bird data from years 2014, 2015, 2017 in the broadleaf habitat
+
+## Index each bird dataframe by species
+```{r}
+### Create list of species codes
+bird.list <- names(summary(bird.dat$spp.code))
+
+### Create lists to store subset dataframes
+list.scrub1 <- list()
+list.scrub2 <- list()
+list.brdlf1 <- list()
+list.brdlf2 <- list()
+
+### Index by species code for scrub habitat and create dataframe(1995-2002)
+for (i in 1:length(bird.list))
+{
+  list.scrub1[[i]] <- assign(paste(bird.list[i], "scrub1", sep = "."), bird.dat3.scrub[which(bird.dat3.scrub$spp.code == bird.list[i]), ])
+  names(list.scrub1)[i] <- bird.list[i]
+}
+list.scrub1 <- Filter(function(x) dim(x)[1] > 0, list.scrub1)
+
+### Index by species code for broadleaf habitat and create dataframe (1995-2002)
+for (i in 1:length(bird.list))
+{
+  list.brdlf1[[i]] <- assign(paste(bird.list[i], "brdlf1", sep = "."), bird.dat3.brdlf[which(bird.dat3.brdlf$spp.code == bird.list[i]), ])
+  names(list.brdlf1)[i] <- bird.list[i]
+}
+list.brdlf1 <- Filter(function(x) dim(x)[1] > 0, list.brdlf1)
+
+### Index by species code for scrub habitat and create dataframe (2014, 2015, 2017)
+for (i in 1:length(bird.list))
+{
+  list.scrub2[[i]] <- assign(paste(bird.list[i], "scrub2", sep = "."), bird.dat4.scrub[which(bird.dat4.scrub$spp.code == bird.list[i]), ])
+  names(list.scrub2)[i] <- bird.list[i]
+}
+list.scrub2 <- Filter(function(x) dim(x)[1] > 0, list.scrub2)
+
+### Index by species code for broadleaf habitat and create dataframe (2014, 2015, 2017)
+for (i in 1:length(bird.list))
+{
+  list.brdlf2[[i]] <- assign(paste(bird.list[i], "brdlf2", sep = "."), bird.dat4.brdlf[which(bird.dat4.brdlf$spp.code == bird.list[i]), ])
+  names(list.brdlf2)[i] <- bird.list[i]
+}
+list.brdlf2 <- Filter(function(x) dim(x)[1] > 0, list.brdlf2)
+```
+
+## Run climwin (Scrub 1995-2002)
+```{r}
+### What type of time window? (Absolute or relative)
+### Range of time periods? (for daily: c(365,0), for monthly: c(12,0))
+### What aggregate statistics? (mean, slope, max, etc.)
+### Response functions to be considered (lin, quad, log)
+
+for (i in 1:length(list.scrub1))
+{
+  current.df <- list.scrub1[[i]]
+  assign(paste(names(list.scrub1)[i], "scrub1.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                                                               xvar = list(rain = rain.dat3.scrub$rainfall),
+                                                                               type = "absolute",
+                                                                               range = c(24, 0),
+                                                                               stat = c("mean"),
+                                                                               func = c("lin"),
+                                                                               refday = c(15, 1),
+                                                                               cinterval = "month",
+                                                                               cdate = rain.dat3.scrub$date4,
+                                                                               bdate = current.df$date4))
+}
+
+for (i in 1:length(list.scrub1))
+{
+  current.df <- list.scrub1[[i]]
+  assign(paste(names(list.scrub1)[i], "scrub1.results2", sep = "."), randwin(repeats= 5,
+                                                                            baseline = glm(N ~ 1, data = current.df),
+                                                                            xvar = list(rain = rain.dat3.scrub$rainfall),
+                                                                            type = "absolute",
+                                                                            range = c(24, 0),
+                                                                            stat = c("mean"),
+                                                                            func = c("lin"),
+                                                                            refday = c(15, 1),
+                                                                            cinterval = "month",
+                                                                            cdate = rain.dat3.scrub$date4,
+                                                                            bdate = current.df$date4))
+} 
+```
+
+## Run climwin (Broadleaf 1995-2002)
+```{r}
+### What type of time window? (Absolute or relative)
+### Range of time periods? (for daily: c(365,0), for monthly: c(12,0))
+### What aggregate statistics? (mean, slope, max, etc.)
+### Response functions to be considered (lin, quad, log)
+
+for (i in 1:length(list.brdlf1))
+{
+  current.df <- list.brdlf1[[i]]
+  assign(paste(names(list.brdlf1)[i], "brdlf1.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                                                               xvar = list(rain = rain.dat3.brdlf$rainfall),
+                                                                               type = "absolute",
+                                                                               range = c(24, 0),
+                                                                               stat = c("mean"),
+                                                                               func = c("lin"),
+                                                                               refday = c(15, 1),
+                                                                               cinterval = "month",
+                                                                               cdate = rain.dat3.brdlf$date4,
+                                                                               bdate = current.df$date4))
+}
+```
+
+## Run climwin (Scrub 2014, 2015, 2017)
+```{r}
+### What type of time window? (Absolute or relative)
+### Range of time periods? (for daily: c(365,0), for monthly: c(12,0))
+### What aggregate statistics? (mean, slope, max, etc.)
+### Response functions to be considered (lin, quad, log)
+
+for (i in 1:length(list.scrub2))
+{
+  current.df <- list.scrub2[[i]]
+  assign(paste(names(list.scrub2)[i], "scrub2.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                                                               xvar = list(rain = rain.dat4.scrub$rainfall),
+                                                                               type = "absolute",
+                                                                               range = c(24, 0),
+                                                                               stat = c("mean"),
+                                                                               func = c("lin"),
+                                                                               refday = c(15, 1),
+                                                                               cinterval = "month",
+                                                                               cdate = rain.dat4.scrub$date4,
+                                                                               bdate = current.df$date4))
+}
+```
+
+## Run climwin (Broadleaf 2014, 2015, 2017)
+```{r}
+### What type of time window? (Absolute or relative)
+### Range of time periods? (for daily: c(365,0), for monthly: c(12,0))
+### What aggregate statistics? (mean, slope, max, etc.)
+### Response functions to be considered (lin, quad, log)
+
+for (i in 1:length(list.brdlf2))
+{
+  current.df <- list.brdlf2[[i]]
+  assign(paste(names(list.brdlf2)[i], "brdlf2.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                                                               xvar = list(rain = rain.dat4.brdlf$rainfall),
+                                                                               type = "absolute",
+                                                                               range = c(24, 0),
+                                                                               stat = c("mean"),
+                                                                               func = c("lin"),
+                                                                               refday = c(15, 1),
+                                                                               cinterval = "month",
+                                                                               cdate = rain.dat4.brdlf$date4,
+                                                                               bdate = current.df$date4))
+}
+
+results2 <- randwin(repeats= 5,
+                    baseline = glm(N ~ 1, data = biol2),
+                    xvar =list(NDVI = clim2$NDVI),           # Weather variables of interest (can include multiple)
+                    type = "absolute",                       # Absolute time window (other option is "relative")
+                    range = c(12, 0),                        # All weather data from year preceding measurements (56) to no weather data (0)
+                    stat = c("mean"),                        # Mean of NDVI measurements
+                    func = c("lin"),                         # Type of response fits you're interested in
+                    refday = c(15, 1),                       # Last day individual was measured (c(15,1) = Jan 15)
+                    cinterval = "month",                     # Interval is bimonthly, but no bimonthly option so try monthly and see what happens
+                    cdate = clim2$date,                      # Climate date given in clim3$date
+                    bdate = biol2$date) 
+```
