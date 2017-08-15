@@ -155,35 +155,41 @@ list.brdlf2 <- Filter(function(x) dim(x)[1] > 0, list.brdlf2)
 ### What aggregate statistics? (mean, slope, max, etc.)
 ### Response functions to be considered (lin, quad, log)
 
+list.scrub1.result <- list()
 for (i in 1:length(list.scrub1))
 {
   current.df <- list.scrub1[[i]]
-  assign(paste(names(list.scrub1)[i], "scrub1.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
-                                                                               xvar = list(rain = rain.dat3.scrub$rainfall),
-                                                                               type = "absolute",
-                                                                               range = c(24, 0),
-                                                                               stat = c("mean"),
-                                                                               func = c("lin"),
-                                                                               refday = c(15, 1),
-                                                                               cinterval = "month",
-                                                                               cdate = rain.dat3.scrub$date4,
-                                                                               bdate = current.df$date4))
+  current.result <-  slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                xvar = list(rain = rain.dat3.scrub$rainfall),
+                                type = "absolute",
+                                range = c(24, 0),
+                                stat = c("mean"),
+                                func = c("lin"),
+                                refday = c(15, 1),
+                                cinterval = "month",
+                                cdate = rain.dat3.scrub$date4,
+                                bdate = current.df$date4)
+  list.scrub1.result[[i]] <- current.result
+  names(list.scrub1.result)[i] <- names(list.scrub1)[i]
 }
 
+list.scrub1.result2 <- list()
 for (i in 1:length(list.scrub1))
 {
   current.df <- list.scrub1[[i]]
-  assign(paste(names(list.scrub1)[i], "scrub1.results2", sep = "."), randwin(repeats= 5,
-                                                                            baseline = glm(N ~ 1, data = current.df),
-                                                                            xvar = list(rain = rain.dat3.scrub$rainfall),
-                                                                            type = "absolute",
-                                                                            range = c(24, 0),
-                                                                            stat = c("mean"),
-                                                                            func = c("lin"),
-                                                                            refday = c(15, 1),
-                                                                            cinterval = "month",
-                                                                            cdate = rain.dat3.scrub$date4,
-                                                                            bdate = current.df$date4))
+  current.result2 <- randwin(repeats= 50,
+                             baseline = glm(N ~ 1, data = current.df),
+                             xvar = list(rain = rain.dat3.scrub$rainfall),
+                             type = "absolute",
+                             range = c(24, 0),
+                             stat = c("mean"),
+                             func = c("lin"),
+                             refday = c(15, 1),
+                             cinterval = "month",
+                             cdate = rain.dat3.scrub$date4,
+                             bdate = current.df$date4)
+  list.scrub1.result2[[i]] <- current.result2
+  names(list.scrub1.result2)[i] <- names(list.scrub1)[i]
 } 
 ```
 
@@ -194,21 +200,89 @@ for (i in 1:length(list.scrub1))
 ### What aggregate statistics? (mean, slope, max, etc.)
 ### Response functions to be considered (lin, quad, log)
 
+list.brdlf1.result <- list()
 for (i in 1:length(list.brdlf1))
 {
   current.df <- list.brdlf1[[i]]
-  assign(paste(names(list.brdlf1)[i], "brdlf1.results", sep = "."), slidingwin(baseline = glm(N ~ 1, data = current.df),
-                                                                               xvar = list(rain = rain.dat3.brdlf$rainfall),
-                                                                               type = "absolute",
-                                                                               range = c(24, 0),
-                                                                               stat = c("mean"),
-                                                                               func = c("lin"),
-                                                                               refday = c(15, 1),
-                                                                               cinterval = "month",
-                                                                               cdate = rain.dat3.brdlf$date4,
-                                                                               bdate = current.df$date4))
+  current.result <-  slidingwin(baseline = glm(N ~ 1, data = current.df),
+                                xvar = list(rain = rain.dat3.brdlf$rainfall),
+                                type = "absolute",
+                                range = c(24, 0),
+                                stat = c("mean"),
+                                func = c("lin"),
+                                refday = c(15, 1),
+                                cinterval = "month",
+                                cdate = rain.dat3.brdlf$date4,
+                                bdate = current.df$date4)
+  list.brdlf1.result[[i]] <- current.result
+  names(list.brdlf1.result)[i] <- names(list.brdlf1)[i]
+}
+
+list.brdlf1.result2 <- list()
+for (i in 1:length(list.brdlf1))
+{
+  current.df <- list.brdlf1[[i]]
+  current.result2 <- randwin(repeats= 50,
+                             baseline = glm(N ~ 1, data = current.df),
+                             xvar = list(rain = rain.dat3.brdlf$rainfall),
+                             type = "absolute",
+                             range = c(24, 0),
+                             stat = c("mean"),
+                             func = c("lin"),
+                             refday = c(15, 1),
+                             cinterval = "month",
+                             cdate = rain.dat3.brdlf$date4,
+                             bdate = current.df$date4)
+  list.brdlf1.result2[[i]] <- current.result2
+  names(list.brdlf1.result2)[i] <- names(list.brdlf1)[i]
+} 
+```
+
+## Look at results (scrub 1995-2002)
+```{r}
+for (i in 1:length(list.scrub1))
+{
+  png(file = file.path("C:","Users", "emily", "OneDrive", "Documents", "R", "git", "Aviary", "rainfall_CHIRPS", "plots",
+                       paste("plot_scrub_", names(list.scrub1)[i], ".png", sep = "")),
+      width = 10,
+      height = 8,
+      units = "in",
+      res = 300)
+  plotall(dataset = list.scrub1.result[[i]][[1]]$Dataset,
+          datasetrand = list.scrub1.result2[[i]][[1]],
+          bestmodel = list.scrub1.result[[i]][[1]]$BestModel,
+          bestmodeldata = list.scrub1.result[[i]][[1]]$BestModelData)
+  dev.off()
 }
 ```
+
+## Look at results (broadleaf 1995-2002)
+```{r}
+for (i in 1:length(list.brdlf1))
+{
+  png(file = file.path("C:","Users", "emily", "OneDrive", "Documents", "R", "git", "Aviary", "rainfall_CHIRPS", "plots",
+                       paste("plot_brdlf_", names(list.brdlf1)[i], ".png", sep = "")),
+      width = 10,
+      height = 8,
+      units = "in",
+      res = 300)
+  plotall(dataset = list.brdlf1.result[[i]][[1]]$Dataset,
+          datasetrand = list.brdlf1.result2[[i]][[1]],
+          bestmodel = list.brdlf1.result[[i]][[1]]$BestModel,
+          bestmodeldata = list.brdlf1.result[[i]][[1]]$BestModelData)
+  dev.off()
+}
+```
+
+
+
+
+
+
+
+
+
+
 
 ## Run climwin (Scrub 2014, 2015, 2017)
 ```{r}
@@ -254,16 +328,4 @@ for (i in 1:length(list.brdlf2))
                                                                                cdate = rain.dat4.brdlf$date4,
                                                                                bdate = current.df$date4))
 }
-
-results2 <- randwin(repeats= 5,
-                    baseline = glm(N ~ 1, data = biol2),
-                    xvar =list(NDVI = clim2$NDVI),           # Weather variables of interest (can include multiple)
-                    type = "absolute",                       # Absolute time window (other option is "relative")
-                    range = c(12, 0),                        # All weather data from year preceding measurements (56) to no weather data (0)
-                    stat = c("mean"),                        # Mean of NDVI measurements
-                    func = c("lin"),                         # Type of response fits you're interested in
-                    refday = c(15, 1),                       # Last day individual was measured (c(15,1) = Jan 15)
-                    cinterval = "month",                     # Interval is bimonthly, but no bimonthly option so try monthly and see what happens
-                    cdate = clim2$date,                      # Climate date given in clim3$date
-                    bdate = biol2$date) 
 ```
